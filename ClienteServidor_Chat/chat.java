@@ -1,8 +1,11 @@
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -14,6 +17,8 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 /**
@@ -38,12 +43,21 @@ public class chat {
  *CLASE QUE CREA EL MARCO DEL CHAT 
  */
 class marcoCliente extends JFrame{
+	laminaMarcoCliente milamina;
 	
+	public laminaMarcoCliente getMilamina() {
+		return milamina;
+	}
+
+	public void setMilamina(laminaMarcoCliente milamina) {
+		this.milamina = milamina;
+	}
+
 	public marcoCliente() {
 		// TODO Auto-generated constructor stub
-		setBounds(600,400,250,150);
+		setBounds(600,400,240,280);
 		
-		laminaMarcoCliente milamina = new laminaMarcoCliente(); //Creo objeto que extiende de jpanel para rellenar mi frame con este
+		milamina = new laminaMarcoCliente(); //Creo objeto que extiende de jpanel para rellenar mi frame con este
 		
 		add(milamina);
 		
@@ -52,36 +66,36 @@ class marcoCliente extends JFrame{
 		
 
 	}
+	
+
 }
 
 
 
-//clase que crea el contenido de la ventana, implementa de runnable para poder crear un hilo
+/**
+ * @author ester
+ *clase que crea el contenido de la ventana
+ */
 class laminaMarcoCliente extends JPanel {
-	/**
-	 * ENVIO DE LOS NICK USUARIO PARA COMPROBAR SI HAY ALGUNO REPETIDO
+	
+	private JTextField campo1;
+	private JLabel nick;
+	public String nick_usuario;
+	private JButton btnEnvio;
+	private JTextArea areaChat;
+	
+	
+	/**Getters y Setters de mi JTextArea para poder manipularlo desde el servidor
+	 * @return areaChat
 	 */
-	public void comprobarRepetidos() {
-		try {
-			Socket misocket = new Socket("localhost", 9999); //Creo socket
-			paqueteEnvio datos = new paqueteEnvio();
-			datos.setNickusuario(nick_usuario);
-			
-			ObjectOutputStream paqueteDatos = new ObjectOutputStream(misocket.getOutputStream()); //creo mi flujo de salida de objetos vinculado a misocket
-			
-			paqueteDatos.writeObject(datos); //envio mi clase paqueteenvio(objeto: datos) mediante el flujo de salida
-			
-			misocket.close(); //cierro el socket
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		
+	public JTextArea getAreaChat() {
+		return areaChat;
 	}
+
+	public void setAreaChat(JTextArea areaChat) {
+		this.areaChat = areaChat;
+	}
+
 
 	/**
 	 * CONSTRUCTORES DE LA CLASE
@@ -103,6 +117,15 @@ class laminaMarcoCliente extends JPanel {
 		
 		add(nick);
 		
+		areaChat = new JTextArea();
+		areaChat.setEditable(false);//Configuramos para que no sea editable
+		areaChat.setLineWrap(true);//Configuramos para que haya ajuste de línea
+		areaChat.setWrapStyleWord(true);//Configuramos para que el ajuste de línea sea por palabra y no por caracteres
+		areaChat.setMargin(new Insets(10 ,50 ,90 ,50));
+		add(areaChat);
+		//Añadimos el área de texto a una instancia de JScrollPane para que se pueda hacer scroll
+		JScrollPane scrollPane = new JScrollPane(areaChat);
+		add(scrollPane);
 		
 		campo1= new JTextField(20);
 		
@@ -129,73 +152,18 @@ class laminaMarcoCliente extends JPanel {
 		add(campo1);
 		
 		btnEnvio= new JButton("Enviar");
-		botonNuevo = new JButton("Nuevo usuario");
+		
 		
 		EnviaTexto enviatexto = new EnviaTexto(); //objeto que implementa de action listener
 		btnEnvio.addActionListener(enviatexto);//añado el evento escuchador a mi boton
 		
-		nuevoUsuario nuevoUsuario = new nuevoUsuario(); //objeto que implementa de action listener
-		botonNuevo.addActionListener(nuevoUsuario);
+	
 		
 		add(btnEnvio);
-		add(botonNuevo);
+	
+	
 		
 	
-	}
-
-	//-----------ACTION LISTENER DE BOTON NUEVO QUE CREA UNA NUEVA VENTANA DE CLIENTE--------------
-	/**
-	 * @author ester
-	 * CLASE NUEVO USUARIO, IMPLEMENTA DE ACTIONLISTENER PARA PODER EJECUTAR LOS MÉTODOS DESEADOS AL PULSAR EL BOTON
-	 */
-	private class nuevoUsuario implements ActionListener{
-		
-
-		/**
-		 *AL PULSAR EL BOTON CREA UNA NUEVA VENTANA CLIENTE
-		 */
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			// TODO Auto-generated method stub
-			
-			marcoCliente mimarco = new marcoCliente();
-			mimarco.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		}
-		
-	}
-
-
-	/**
-	 * MÉTODO QUE ENVÍA LOS MENSAJES AL SERVIDOR
-	 */
-	public void envioTexto() {
-		try {
-			//creo el socket (IP, Puert0)
-			Socket misocket = new Socket("localhost", 9999);
-			
-			//instancio la clase paqueteEnvio
-			paqueteEnvio datos = new paqueteEnvio();
-			
-			datos.setNick(nick.getText());//capto el nick dentro del jtextfield con mi getter de paqueteEnvio
-			
-		
-			
-			datos.setMensaje(campo1.getText()); //campo1 es el nombre de mi jtextfield que lo asigno al getter de mensaje de paqueteenvio
-			
-			
-			ObjectOutputStream paqueteDatos = new ObjectOutputStream(misocket.getOutputStream()); //creo mi flujo de salida de objetos vinculado a misocket
-			
-			paqueteDatos.writeObject(datos); //envio mi clase paqueteenvio(objeto: datos) mediante el flujo de salida
-			
-			misocket.close(); //cierro el socket
-			
-		} catch (UnknownHostException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			System.out.println(e1.getMessage());
-	}
 	}
 
 	//----------------------ACTIONLISTENER DE BOTON ENVIO PARA ENVIAR LOS MENSAJES DEL USUARIO AL SERVIDOR---------------
@@ -211,21 +179,77 @@ class laminaMarcoCliente extends JPanel {
 		public void actionPerformed(ActionEvent e) {
 			// TODO Auto-generated method stub
 			
-	
 				envioTexto();
 				campo1.setText(null); //vacía el textfield una vez enviado el mensaje
 		}
 		
 	}
-	//---------------------------------------------------------------------------------------
+	//---------------------------------------------------------------------------------------------
 	
-	private JTextField campo1;
+	//Variables donde almaceno la ip y el puerto
+	String IP = "localhost";
+	int puerto = 9999;
+	/**
+	 * MÉTODO QUE ENVÍA LOS MENSAJES AL SERVIDOR
+	 */
+	public void envioTexto() {
+		try {
+			//creo el socket (IP, Puert0)
+			Socket misocket = new Socket(IP, puerto);
+			
+			//instancio la clase paqueteEnvio
+			paqueteEnvio datos = new paqueteEnvio();
+			
+			datos.setNick(nick.getText());//capto el nick dentro del jtextfield con mi getter de paqueteEnvio
+			
+		
+			datos.setMensaje(campo1.getText()); //campo1 es el nombre de mi jtextfield que lo asigno al getter de mensaje de paqueteenvio
+			
+			
+			ObjectOutputStream paqueteDatos = new ObjectOutputStream(misocket.getOutputStream()); //creo mi flujo de salida de objetos vinculado a misocket
+			
+		
+			paqueteDatos.writeObject(datos); //envio mi clase paqueteenvio(objeto: datos) mediante el flujo de salida
+			
+			
+			
+			misocket.close(); //cierro el socket
+			
+		} catch (UnknownHostException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			System.out.println(e1.getMessage());
+	}
+	}
 	
-	private JLabel nick;
 	
-	public String nick_usuario;
-	
-	private JButton btnEnvio, botonNuevo;
+	/**
+	 * ENVIO DE LOS NICK USUARIO PARA COMPROBAR SI HAY ALGUNO REPETIDO
+	 */
+	public void comprobarRepetidos() {
+		try {
+			Socket misocket = new Socket(IP, puerto); //Creo socket
+			paqueteEnvio datos = new paqueteEnvio();
+			datos.setNickusuario(nick_usuario);
+			
+			ObjectOutputStream paqueteDatos = new ObjectOutputStream(misocket.getOutputStream()); //creo mi flujo de salida de objetos vinculado a misocket
+			
+			paqueteDatos.writeObject(datos); //envio mi clase paqueteenvio(objeto: datos) mediante el flujo de salida
+			
+			misocket.close(); //cierro el socket
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+	}
+
 	
 
 }
